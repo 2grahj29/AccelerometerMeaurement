@@ -1,6 +1,7 @@
 package com.example.a2grahj29.accelerometermeaurement;
 
 import android.content.Context;
+import android.content.SearchRecentSuggestionsProvider;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,6 +14,8 @@ import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
+    Sensor accel, magField;
+    float[] accelValues, magFieldValues, orientationMatrix, orientations;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,8 +23,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
         SensorManager sMgr = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        Sensor accel = sMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        accel = sMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magField = sMgr.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
         sMgr.registerListener(this, accel, SensorManager.SENSOR_DELAY_UI);
+        sMgr.registerListener(this, magField, SensorManager.SENSOR_DELAY_UI);
+
+        accelValues = new float[3];
+        magFieldValues = new float[3];
+        orientationMatrix = new float[16];
+        orientations = new float[3];
 
     }
 
@@ -33,9 +44,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         TextView yacc = (TextView)findViewById(R.id.textViewY);
         TextView zacc = (TextView)findViewById(R.id.textViewZ);
 
-        xacc.setText(df.format(event.values[0]));
-        yacc.setText(df.format(event.values[1]));
-        zacc.setText(df.format(event.values[2]));
+        if(event.sensor == accel){
+            for (int i=0; i<3; i++)
+            accelValues[i] = event.values[i];
+        }
+        else if (event.sensor == magField){
+            for (int i=0; i<3; i++)
+                magFieldValues[i] = event.values[i];
+        }
+
+        SensorManager.getRotationMatrix(orientationMatrix, null, accelValues, magFieldValues);
+        SensorManager.getOrientation (orientationMatrix, orientations);
+
+        xacc.setText(df.format(orientations[0] * 180/Math.PI));
+        yacc.setText(df.format(orientations[1] * 180/Math.PI));
+        zacc.setText(df.format(orientations[2] * 180/Math.PI));
+
+
     }
 
     @Override
